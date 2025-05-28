@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trắc nghiệm Lý Thuyết Lái Xe</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #eaf4ff, #d4e3fc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hidden { display: none; }
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: white;
+      padding: 40px 30px;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    #page-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 25px;
+      color: #2c3e50;
+    }
+    select {
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 25px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 60%;
+      max-width: 300px;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .btn {
+      padding: 12px 24px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
+      font-size: 15px;
+    }
+    .btn:hover {
+      background-color: #2980b9;
+    }
+    .btn-danger {
+      background-color: #e74c3c;
+    }
+    .btn-danger:hover {
+      background-color: #c0392b;
+    }
+    .close-button {
+      position: fixed;
+      top: 20px;
+      right: 30px;
+      background: transparent;
+      color: #e74c3c;
+      border: none;
+      font-size: 42px;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 1;
+      z-index: 9999;
+    }
+    input[type="text"], input[type="password"] {
+      padding: 10px;
+      width: 90%;
+      max-width: 400px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    label {
+      font-size: 14px;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    #options .option {
+      padding: 14px;
+      margin: 8px 0;
+      background: #f0f0f0;
+      border-radius: 8px;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: 1px solid transparent;
+    }
+    #options .option:hover {
+      background: #d6eaf8;
+    }
+    #options .option.selected {
+      background: #3498db;
+      color: white;
+      border-color: #2980b9;
+    }
+    #answers {
+      max-height: 400px;
+      overflow-y: auto;
+      text-align: left;
+      margin-top: 20px;
+    }
+    #answers div {
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      background: #fdfdfd;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 30px 20px;
+      }
+      .btn {
+        width: 100%;
+        font-size: 14px;
+      }
+      select {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="page-title">TRẮC NGHIỆM<br>LÝ THUYẾT LÁI XE</h2>
+
+    <div id="login">
+      <input type="text" id="username" placeholder="Tên đăng nhập"><br>
+      <input type="password" id="password" placeholder="Mật khẩu"><br>
+      <label><input type="checkbox" id="remember"> Ghi nhớ đăng nhập</label><br>
+      <button class="btn" onclick="login()">Đăng nhập</button>
+    </div>
+
+    <div id="home" class="hidden">
+      <select id="time-select">
+        <option value="600">10 PHÚT</option>
+        <option value="900">15 PHÚT</option>
+        <option value="1200">20 PHÚT</option>
+        <option value="1800">30 PHÚT</option>
+      </select>
+      <div class="btn-group">
+        <button class="btn" onclick="startQuiz('chuong1')">CHƯƠNG 1</button>
+        <button class="btn" onclick="startQuiz('chuong2')">CHƯƠNG 2</button>
+        <button class="btn" onclick="startQuiz('chuong3')">CHƯƠNG 3</button>
+        <button class="btn" onclick="startQuiz('chuong4')">CHƯƠNG 4</button>
+        <button class="btn" onclick="startQuiz('chuong5')">CHƯƠNG 5</button>
+        <button class="btn" onclick="startQuiz('chuong6')">CHƯƠNG 6</button>
+        <button class="btn" onclick="startExam()">THI THỬ</button>
+        <button class="btn btn-danger" onclick="logout()">ĐĂNG XUẤT</button>
+      </div>
+    </div>
+
+    <div id="quiz" class="hidden">
+      <div id="timer"></div>
+      <h3 id="question-title"></h3>
+      <div id="question-image"></div>
+      <div id="options"></div>
+      <div class="btn-group">
+        <button class="btn" onclick="prevQuestion()">CÂU TRƯỚC</button>
+        <button class="btn" onclick="nextQuestion()">TIẾP</button>
+        <button class="btn btn-danger" onclick="submitQuiz()">NỘP BÀI</button>
+      </div>
+    </div>
+
+    <div id="result" class="hidden">
+      <button class="close-button" onclick="returnHome()">&times;</button>
+      <h3>Kết quả</h3>
+      <p id="score"></p>
+      <div id="answers"></div>
+      <!-- <button onclick="location.reload()">Làm lại</button> -->
+    </div>
+  </div>
+
+  <script>
+  let questions = {}, users = [], currentQuestions = [], current = 0, userAnswers = [], timer, timeLeft = 0, isExam = false;
+
+  const chapterTitles = {
+    "chuong1": "Chương 1: Quy định chung và quy tắc giao thông đường bộ",
+    "chuong2": "Chương 2: Văn hóa giao thông, đạo đức người lái xe, kỹ năng phòng cháy, chữa cháy và cứu hộ, cứu nạn",
+    "chuong3": "Chương 3: Kỹ thuật lái xe",
+    "chuong4": "Chương 4: Cấu tạo và sửa chữa",
+    "chuong5": "Chương 5: Báo hiệu đường bộ",
+    "chuong6": "Chương 6: Giải thế sa hình và kỹ năng xử lý tình huống"
+  };
+
+  fetch('data.json').then(res => res.json()).then(data => questions = data);
+  fetch('users.json').then(res => res.json()).then(data => { users = data; checkRemember(); });
+
+  function login() {
+    const u = document.getElementById('username').value;
+    const p = CryptoJS.SHA256(document.getElementById('password').value).toString();
+    const found = users.find(user => user.username === u && user.password === p);
+    if (found) {
+      if (document.getElementById('remember').checked)
+        localStorage.setItem('rememberedUser', JSON.stringify({ u, p }));
+      document.getElementById('login').classList.add('hidden');
+      document.getElementById('home').classList.remove('hidden');
+    } else alert("Sai thông tin đăng nhập!");
+  }
+
+  function logout() {
+      localStorage.removeItem('rememberedUser');
+      location.reload();
+    }
+
+  function checkRemember() {
+    const saved = localStorage.getItem('rememberedUser');
+    if (saved) {
+      const { u, p } = JSON.parse(saved);
+      const found = users.find(user => user.username === u && user.password === p);
+      if (found) {
+        document.getElementById('login').classList.add('hidden');
+        document.getElementById('home').classList.remove('hidden');
+      }
+    }
+  }
+
+  function startQuiz(chap) {
+    isExam = false;
+    document.getElementById("page-title").innerText = chapterTitles[chap] || "Trắc nghiệm Lý thuyết Lái xe";
+    currentQuestions = questions[chap];
+    userAnswers = new Array(currentQuestions.length).fill(null);
+    current = 0;
+    timeLeft = parseInt(document.getElementById('time-select').value);
+    document.getElementById('home').classList.add('hidden');
+    document.getElementById('quiz').classList.remove('hidden');
+    showQuestion();
+    startTimer();
+  }
+
+function startExam() {
+  isExam = true;
+  document.getElementById("page-title").innerText = "Đề Thi Thử Trắc Nghiệm Lái Xe";
+
+  // B1: Tìm tất cả câu liệt từ chương 1–3
+  const allLiCandidates = [
+    ...questions.chuong1.map(q => ({ ...q, chuong: "chuong1" })),
+    ...questions.chuong2.map(q => ({ ...q, chuong: "chuong2" })),
+    ...questions.chuong3.map(q => ({ ...q, chuong: "chuong3" }))
+  ].filter(q => q.is_liet);
+
+  // B2: Chọn ngẫu nhiên 1 câu liệt
+  const selectedLiet = allLiCandidates[Math.floor(Math.random() * allLiCandidates.length)];
+
+  // B3: Gán chương chứa câu liệt, loại câu liệt khỏi chương đó và lấy phần còn lại
+  let c1, c2, c3;
+  if (selectedLiet.chuong === "chuong1") {
+    c1 = [selectedLiet, ...questions.chuong1.filter(q => !q.is_liet && q.id !== selectedLiet.id)
+      .sort(() => 0.5 - Math.random()).slice(0, 7)];
+    c2 = questions.chuong2.filter(q => !q.is_liet).sort(() => 0.5 - Math.random()).slice(0, 2);
+    c3 = questions.chuong3.filter(q => !q.is_liet).sort(() => 0.5 - Math.random()).slice(0, 1);
+  } else if (selectedLiet.chuong === "chuong2") {
+    c2 = [selectedLiet, ...questions.chuong2.filter(q => !q.is_liet && q.id !== selectedLiet.id)
+      .sort(() => 0.5 - Math.random()).slice(0, 1)];
+    c1 = questions.chuong1.filter(q => !q.is_liet).sort(() => 0.5 - Math.random()).slice(0, 8);
+    c3 = questions.chuong3.filter(q => !q.is_liet).sort(() => 0.5 - Math.random()).slice(0, 1);
+  } else {
+    c3 = [selectedLiet];
+    c1 = questions.chuong1.filter(q => !q.is_liet).sort(() => 0.5 - Math.random()).slice(0, 8);
+    c2 = questions.chuong2.filter(q => !q.is_liet).sort(() => 0.5 - Math.random()).slice(0, 2);
+  }
+
+  // B4: Các chương còn lại không chứa câu liệt
+  const c4 = questions.chuong4.sort(() => 0.5 - Math.random()).slice(0, 1);
+  const c5 = questions.chuong5.sort(() => 0.5 - Math.random()).slice(0, 9);
+  const c6 = questions.chuong6.sort(() => 0.5 - Math.random()).slice(0, 9);
+
+  // B5: Gộp đề theo đúng thứ tự chương
+  currentQuestions = [...c1, ...c2, ...c3, ...c4, ...c5, ...c6];
+
+  // Khởi tạo mảng trả lời và thời gian
+  userAnswers = new Array(currentQuestions.length).fill(null);
+  current = 0;
+  timeLeft = 1200; // 20 phút
+
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  showQuestion();
+  startTimer();
+}
+
+
+
+  function startTimer() {
+    clearInterval(timer);
+    timer = setInterval(() => {
+      if (timeLeft-- <= 0) {
+        clearInterval(timer);
+        submitQuiz();
+      }
+      document.getElementById('timer').innerText = `Thời gian còn: ${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}`;
+    }, 1000);
+  }
+
+  function showQuestion() {
+    const q = currentQuestions[current];
+    document.getElementById('question-title').innerText = `${current+1}. ${q.question}`;
+    const imageContainer = document.getElementById('question-image');
+    imageContainer.innerHTML = q.image ? `<img src="${q.image}" alt="Hình câu hỏi" style="max-width: 100%; margin: 10px 0;">` : '';
+    const container = document.getElementById('options');
+    container.innerHTML = '';
+    q.options.forEach((opt, idx) => {
+      const div = document.createElement('div');
+      div.className = 'option';
+      div.innerText = `${String.fromCharCode(65+idx)}. ${opt}`;
+      if (userAnswers[current] === idx) div.classList.add('selected');
+      div.onclick = () => { userAnswers[current] = idx; showQuestion(); };
+      container.appendChild(div);
+    });
+  }
+
+  function nextQuestion() { if (current < currentQuestions.length - 1) { current++; showQuestion(); } }
+  function prevQuestion() { if (current > 0) { current--; showQuestion(); } }
+
+  function returnHome() {
+    document.getElementById('result').classList.add('hidden');
+    document.getElementById('home').classList.remove('hidden');
+    document.getElementById('page-title').innerText = "Trắc nghiệm Lý thuyết Lái xe";
+  }
+
+ function submitQuiz() {
+  clearInterval(timer);
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+
+  let correct = 0, hasWrongLiet = false;
+  const ansDiv = document.getElementById('answers');
+  ansDiv.innerHTML = '';
+
+  currentQuestions.forEach((q, i) => {
+    
+    const ua = userAnswers[i];
+    const isCorrect = ua === q.answer;
+
+    if (q.is_liet && !isCorrect) {
+      hasWrongLiet = true;
+    }
+
+    let html = `<div style="border: 1px solid ${q.is_liet ? '#f00' : '#ccc'}; padding: 10px; margin: 10px 0; border-radius: 10px; background: ${q.is_liet ? '#ffe6e6' : '#fff'};">
+  <strong>Câu ${i + 1}${q.is_liet ? ' (Câu điểm liệt)' : ''}:</strong> ${q.question}<br>`;
+
+
+    if (q.image) {
+      html += `<img src="${q.image}" alt="Hình ảnh câu hỏi" style="max-width: 100%; margin: 10px 0;"><br>`;
+    }
+
+    html += `
+      <span style="display: block;">Bạn chọn: <strong style="color:${isCorrect ? 'green' : 'red'}">${ua !== null ? q.options[ua] : '---'}</strong></span>
+      <span style="display: block;">Đáp án đúng: <strong style="color:green">${q.options[q.answer]}</strong></span>
+      <span style="font-weight: bold; color:${isCorrect ? 'green' : 'red'}">${isCorrect ? '✔ Đúng' : '✘ Sai'}</span>
+      ${q.is_liet ? '<span style="color: red; font-weight: bold;">(Câu điểm liệt)</span>' : ''}
+    </div>`;
+
+    ansDiv.innerHTML += html;
+
+    if (isCorrect) correct++;
+  });
+
+  const total = currentQuestions.length;
+  const score = ((correct / total) * 100).toFixed(2);
+  let summary = `✅ Bạn đúng ${correct}/${total} câu (${score}%)`;
+
+  if (isExam) {
+    if (hasWrongLiet) {
+      summary += `\n❌ Bạn đã sai câu điểm liệt → RỚT.`;
+    } else {
+      const pass = correct >= 27;
+      summary += `\n${pass ? '🎉 Đạt yêu cầu!' : '❌ Chưa đạt yêu cầu.'}`;
+    }
+  }
+
+  document.getElementById('score').innerText = summary;
+}
+
+</script>
+</body>
+</html>
